@@ -55,18 +55,25 @@ async def on_message(message: discord.Message):
     # Process the message with the agent you wrote
     # Open up the agent.py file to customize the agent
     logger.info(f"Processing message from {message.author}: {message.content}")
-    response = await agent.run(message)
+    
+    # Show typing indicator while processing the request
+    async with message.channel.typing():
+        response = await agent.run(message)
 
-    # Send the response back to the channel
-    await message.reply(response)
+    # Handle both single responses and response chunks
+    if isinstance(response, list):
+        # Send the first chunk as a reply
+        await message.reply(response[0])
+        
+        # Send subsequent chunks as follow-up messages
+        for chunk in response[1:]:
+            await message.channel.send(chunk)
+    else:
+        # Send the response back to the channel
+        await message.reply(response)
 
 
 # Commands
-
-
-# This example command is here to show you how to add commands to the bot.
-# Run !ping with any number of arguments to see the command in action.
-# Feel free to delete this if your project will not need commands.
 @bot.command(name="ping", help="Pings the bot.")
 async def ping(ctx, *, arg=None):
     if arg is None:
