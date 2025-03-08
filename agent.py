@@ -1,4 +1,5 @@
 import os
+from bibliography import Bibliography
 import discord
 from mistralai import Mistral
 
@@ -20,13 +21,16 @@ Keep your answers concise and focused on the most important information.
 Do not fabricate paper titles, authors, or citations. Only provide information that is included in the search results.
 """
 
-
 class MistralAgent:
     def __init__(self):
         MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
         self.client = Mistral(api_key=MISTRAL_API_KEY)
+        self.bibliography = Bibliography()
 
     async def run(self, message: discord.Message):
+        if message.content.lower() == "give me the bibliography":
+            return self.bibliography.get_formatted_bibliography()
+
         is_research = await is_research_query(self.client, message.content)
         
         if is_research:
@@ -36,6 +40,10 @@ class MistralAgent:
                 search_results = await search_google_scholar(search_query)
                 formatted_results = await format_search_results(search_query, search_results)
                 system_content = f"You are a research assistant. Answer based on these papers:\n\n{formatted_results}"
+                
+                # Add papers to bibliography
+                for paper in search_results:
+                    self.bibliography.add_paper(paper)
             else:
                 system_content = "You are a research assistant. The user has a research query."
         else:
