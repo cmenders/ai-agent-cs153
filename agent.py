@@ -1,4 +1,5 @@
 import os
+import re
 from bibliography import Bibliography
 import discord
 from mistralai import Mistral
@@ -28,8 +29,8 @@ class MistralAgent:
         self.bibliography = Bibliography()
 
     async def run(self, message: discord.Message):
-        if message.content.lower() == "give me the bibliography":
-            return self.bibliography.get_formatted_bibliography()
+        if re.search(r'\b(give|show|display|present|list)\s+(?:me\s+)?(?:the\s+)?(bibliography|citations|references)\b', message.content.lower()):
+            return self.split_message(self.bibliography.get_formatted_bibliography())
 
         is_research = await is_research_query(self.client, message.content)
         
@@ -58,4 +59,24 @@ class MistralAgent:
             messages=messages
         )
         content = response.choices[0].message.content
-        return content
+    
+        # Split the content into chunks of 2000 characters or less
+        return self.split_message(content)
+
+    def split_message(self, content):
+        if len(content) <= 2000:
+            return [content]
+        
+        chunks = []
+        while len(content) > 2000:
+            split_index = content.rfind('\n', 0, 2000)
+            if split_index == -1:  # If no newline found, force split at 2000
+                split_index = 2000
+            
+            chunks.append(content[:split_index])
+            content = content[split_index:].lstrip()
+        
+        if content:
+            chunks.append(content)
+        
+        return chunks
