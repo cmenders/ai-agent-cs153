@@ -231,4 +231,95 @@ async def clear_notes(ctx, paper_index: int = None):
         else:
             await ctx.send("⚠ Failed to clear notes. Please try again.")
 
+# Reading List Commands
+@bot.command(name="reading_list", help="Manage reading lists.")
+async def reading_list(ctx, action: str, name: str = None, paper_index: int = None):
+    """
+    Manage reading lists - create lists, add/remove papers, and view lists.
+    
+    Usage: !reading_list <action> [name] [paper_index]
+    Actions: create, add, view, remove
+    
+    Examples:
+    !reading_list create ML_Healthcare
+    !reading_list add ML_Healthcare 3
+    !reading_list view ML_Healthcare
+    !reading_list view (shows all lists)
+    !reading_list remove ML_Healthcare 2
+    """
+    conversation_id = str(ctx.channel.id)
+    
+    # Create a new reading list
+    if action.lower() == "create" and name:
+        success = agent.reading_lists.create_list(conversation_id, name)
+        if success:
+            await ctx.send(f"✓ Created reading list: {name}")
+        else:
+            await ctx.send(f"⚠ Reading list '{name}' already exists or could not be created.")
+    
+    # Add a paper to a reading list
+    elif action.lower() == "add" and name and paper_index is not None:
+        paper_key, paper = agent.bibliography.get_paper_by_index(paper_index)
+        if not paper_key:
+            await ctx.send(f"Paper {paper_index} not found. Use !papers to see available papers.")
+            return
+        
+        success = agent.reading_lists.add_paper_to_list(conversation_id, name, paper_key)
+        if success:
+            paper_title = agent.bibliography.get_paper_title(paper_key)
+            await ctx.send(f"✓ Added paper \"{paper_title}\" to reading list: {name}")
+        else:
+            await ctx.send(f"⚠ Reading list '{name}' not found or paper could not be added.")
+    
+    # View a specific reading list or all lists
+    elif action.lower() == "view":
+        paper_info = agent.bibliography.get_paper_info_dict()
+        if name:
+            formatted_list = agent.reading_lists.format_lists(conversation_id, name, paper_info)
+        else:
+            formatted_list = agent.reading_lists.format_lists(conversation_id)
+        
+        chunks = agent.split_message(formatted_list)
+        for chunk in chunks:
+            await ctx.send(chunk)
+    
+    # Remove a paper from a reading list
+    elif action.lower() == "remove" and name and paper_index is not None:
+        paper_key, paper = agent.bibliography.get_paper_by_index(paper_index)
+        if not paper_key:
+            await ctx.send(f"Paper {paper_index} not found. Use !papers to see available papers.")
+            return
+        
+        success = agent.reading_lists.remove_paper_from_list(conversation_id, name, paper_key)
+        if success:
+            paper_title = agent.bibliography.get_paper_title(paper_key)
+            await ctx.send(f"✓ Removed paper \"{paper_title}\" from reading list: {name}")
+        else:
+            await ctx.send(f"⚠ Reading list '{name}' not found or paper not in list.")
+    
+    # Delete a reading list
+    elif action.lower() == "delete" and name:
+        success = agent.reading_lists.delete_list(conversation_id, name)
+        if success:
+            await ctx.send(f"✓ Deleted reading list: {name}")
+        else:
+            await ctx.send(f"⚠ Reading list '{name}' not found.")
+    
+    else:
+        await ctx.send("Invalid command. Use !help reading_list for usage information.")
+
+@bot.command(name="related", help="Find papers related to a specific paper.")
+async def related(ctx, paper_index: int, max_results: int = 5):
+    """
+    Find papers related to a specific paper based on title, authors, and content.
+    
+    Usage: !related <paper_index> [max_results]
+    Example: !related 1 3
+    """
+    result = agent.bibliography.find_related_papers(paper_index, max_results)
+    
+    chunks = agent.split_message(result)
+    for chunk in chunks:
+        await ctx.send(chunk)
+
 bot.run(token)

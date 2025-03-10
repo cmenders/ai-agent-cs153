@@ -1,4 +1,4 @@
-# Research Assistant Discord Bot
+**# Research Assistant Discord Bot
 
 ## Overview
 This Discord bot serves as a research assistant that can search Google Scholar, find academic papers, and help users with research-related questions. The bot uses Mistral AI to process queries and generate helpful responses based on scholarly research.
@@ -9,6 +9,8 @@ This Discord bot serves as a research assistant that can search Google Scholar, 
 - **Bibliography Management**: Keep track of papers cited in a conversation
 - **Citation Formatting**: Format citations in various academic styles
 - **Research Notes**: Add, view, and manage notes for papers
+- **Reading Lists**: Organize papers into custom collections for different research topics
+- **Related Papers Recommendation**: Get suggestions for papers related to your current reading
 
 ## Commands
 
@@ -25,6 +27,12 @@ This Discord bot serves as a research assistant that can search Google Scholar, 
 | `!view_notes [number]` | View notes for a paper or all papers | `!view_notes 1` or `!view_notes` |
 | `!delete_note <paper> <note>` | Delete a specific note | `!delete_note 1 2` |
 | `!clear_notes [number]` | Clear notes for a paper or all notes | `!clear_notes 1` or `!clear_notes` |
+| `!reading_list create <name>` | Create a new reading list | `!reading_list create ML_Healthcare` |
+| `!reading_list add <name> <paper_number>` | Add paper to a reading list | `!reading_list add ML_Healthcare 3` |
+| `!reading_list view [name]` | View a specific or all reading lists | `!reading_list view ML_Healthcare` |
+| `!reading_list remove <name> <paper_number>` | Remove paper from a reading list | `!reading_list remove ML_Healthcare 3` |
+| `!reading_list delete <name>` | Delete an entire reading list | `!reading_list delete ML_Healthcare` |
+| `!related <paper_number> [max_results]` | Find papers related to the specified paper | `!related 2 5` |
 
 ### Natural Language Interactions
 
@@ -83,6 +91,28 @@ Delete or clear notes:
 Delete note 2 from paper 1
 Clear notes for paper 3
 Delete all my research notes
+```
+
+#### Reading Lists
+
+Create and manage reading lists:
+```
+Create a reading list called Quantum_Computing
+Add paper 2 to my Quantum_Computing list
+Show my reading lists
+Display papers in my Quantum_Computing list
+Remove paper 1 from my Quantum_Computing list
+Delete my Quantum_Computing list
+```
+
+#### Related Papers
+
+Find papers related to your current readings based on title, authors, and abstract similarity:
+```
+Find papers related to paper 1
+Show me research similar to paper 3
+Get papers related to paper 2
+Display similar papers to paper 4
 ```
 
 #### Citation Styles
@@ -177,3 +207,55 @@ Paper: Advances in Quantum Computing Algorithms (2023)
   Note 1 [2025-03-10 14:32:45]:
   This paper presents a novel approach to quantum error correction that could be applicable to our research.
 ```
+
+### Example 5: Reading Lists
+
+User:
+```
+Create a reading list called Quantum_Computing
+```
+
+Bot:
+```
+✓ Created reading list: Quantum_Computing
+```
+
+User:
+```
+Add paper 1 to my Quantum_Computing list
+```
+
+Bot:
+```
+✓ Added paper "Advances in Quantum Computing Algorithms" to reading list: Quantum_Computing
+```
+
+### Example 6: Related Papers
+
+User:
+```
+Find papers related to paper 1
+```
+
+Bot:
+```
+Papers related to "Advances in Quantum Computing Algorithms":
+
+1. "Quantum Supremacy and Its Applications" (2024)
+   Similarity: 87%
+   • Shared authors: J. Smith
+   • Similar research focus on quantum algorithms
+   • Builds on error correction methods from the original paper
+
+2. "Practical Implementations of NISQ Algorithms" (2023)
+   Similarity: 76%
+   • Different authors but cites the original paper extensively
+   • Focuses on practical applications of the theoretical work
+   • Uses the same experimental framework
+
+3. "Survey of Quantum Error Correction Methods" (2022)
+   Similarity: 73%
+   • Different authors
+   • Covers the same error correction approach in detail
+   • Cites similar foundational papers
+```**

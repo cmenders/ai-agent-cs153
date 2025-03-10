@@ -8,6 +8,7 @@ import json
 from mistralai.models.sdkerror import SDKError
 from citation_formatter import get_available_styles
 from research_notes import ResearchNotes
+from reading_lists import ReadingLists
 
 
 from query_processing import is_research_query, extract_search_query
@@ -34,12 +35,24 @@ class MistralAgent:
         self.client = Mistral(api_key=MISTRAL_API_KEY)
         self.bibliography = Bibliography()
         self.notes = ResearchNotes()
+        self.reading_lists = ReadingLists()
 
     async def run(self, message: discord.Message):
         # Handle note commands
         note_command = self.check_for_note_command(message.content)
         if note_command:
             return await self.handle_note_command(message, note_command)
+        
+        # Handle reading list commands
+        reading_list_command = self.check_for_reading_list_command(message.content)
+        if reading_list_command:
+            return await self.handle_reading_list_command(message, reading_list_command)
+        
+        # Handle related papers commands
+        related_papers_match = re.search(r'\b(?:find|show|get|display)\s+(?:papers|research)\s+(?:related|similar)\s+(?:to)?\s+(?:paper\s+)?(\d+)\b', message.content.lower())
+        if related_papers_match:
+            paper_index = related_papers_match.group(1)
+            return self.split_message(self.bibliography.find_related_papers(int(paper_index)))
         
         # Handle citation formatting commands
         if re.search(r'\b(cite|format|citation)\s+(?:paper)?\s*(\d+)?\s+(?:in|as|using)?\s+([a-zA-Z]+)(?:\s+format|style)?\b', message.content.lower()):
@@ -270,6 +283,180 @@ class MistralAgent:
         
         return self.split_message(self.bibliography.get_formatted_bibliography(style))
 
+    def check_for_reading_list_command(self, message_content):
+        """Check if the message contains a reading list command and return the type of command"""
+        
+        # Check for create reading list command
+        create_match = re.search(r'\b(?:create|make|new)\s+(?:a\s+)?reading\s+list\s+(?:called|named)?\s+([\w_-]+)', message_content, re.IGNORECASE)
+        if create_match:
+            return {
+                "command": "create",
+                "list_name": create_match.group(1)
+            }
+        
+        # Check for add paper to reading list command
+        add_match = re.search(r'\b(?:add)\s+paper\s+(\d+)\s+(?:to|into)\s+(?:my\s+)?(?:reading\s+list\s+)?([\w_-]+)', message_content, re.IGNORECASE)
+        if add_match:
+            return {
+                "command": "add",
+                "paper_index": add_match.group(1),
+                "list_name": add_match.group(2)
+            }
+        
+        # Check for view reading list(s) command
+        view_match = re.search(r'\b(?:view|show|display|list)\s+(?:my\s+)?(?:reading\s+list\s+)?([\w_-]+)', message_content, re.IGNORECASE)
+        if view_match:
+            return {
+                "command": "view",
+                "list_name": view_match.group(1)
+            }
+        
+        # Check for view all reading lists command
+        view_all_match = re.search(r'\b(?:view|show|display|list)\s+(?:all\s+)?(?:my\s+)?reading\s+lists', message_content, re.IGNORECASE)
+        if view_all_match:
+            return {
+                "command": "view_all"
+            }
+        
+        # Check for remove paper from reading list command
+        remove_match = re.search(r'\b(?:remove|delete)\s+paper\s+(\d+)\s+from\s+(?:my\s+)?(?:reading\s+list\s+)?([\w_-]+)', message_content, re.IGNORECASE)
+        if remove_match:
+            return {
+                "command": "remove",
+                "paper_index": remove_match.group(1),
+                "list_name": remove_match.group(2)
+            }
+        
+        # Check for delete reading list command
+        delete_match = re.search(r'\b(?:delete|remove)\s+(?:my\s+)?(?:reading\s+list\s+)?([\w_-]+)', message_content, re.IGNORECASE)
+        if delete_match:
+            return {
+                "command": "delete",
+                "list_name": delete_match.group(1)
+            }
+        
+        # Check for explicit reading list commands with prefix
+        cmd_match = re.search(r'!reading_list\s+(create|add|view|remove|delete)\s+([\w_-]+)(?:\s+(\d+))?', message_content)
+        if cmd_match:
+            command = cmd_match.group(1)
+            list_name = cmd_match.group(2)
+            paper_index = cmd_match.group(3) if len(cmd_match.groups()) > 2 else None
+            
+            if command == "create":
+                return {
+                    "command": "create",
+                    "list_name": list_name
+                }
+            elif command == "add" and paper_index:
+                return {
+                    "command": "add",
+                    "list_name": list_name,
+                    "paper_index": paper_index
+                }
+            elif command == "view":
+                return {
+                    "command": "view",
+                    "list_name": list_name
+                }
+            elif command == "remove" and paper_index:
+                return {
+                    "command": "remove",
+                    "list_name": list_name,
+                    "paper_index": paper_index
+                }
+            elif command == "delete":
+                return {
+                    "command": "delete",
+                    "list_name": list_name
+                }
+        
+        # Check for view all reading lists with prefix
+        if message_content.strip() == "!reading_list view" or message_content.strip() == "!reading_list":
+            return {
+                "command": "view_all"
+            }
+        
+        return None
+    
+    async def handle_reading_list_command(self, message, command_info):
+        """Handle reading list commands"""
+        conversation_id = str(message.channel.id)
+        
+        # Create a new reading list
+        if command_info["command"] == "create":
+            list_name = command_info["list_name"]
+            success = self.reading_lists.create_list(conversation_id, list_name)
+            
+            if success:
+                return [f"✓ Created reading list: {list_name}"]
+            else:
+                return [f"⚠ Reading list '{list_name}' already exists."]
+        
+        # Add paper to a reading list
+        elif command_info["command"] == "add":
+            list_name = command_info["list_name"]
+            paper_index = command_info["paper_index"]
+            
+            paper_key, paper = self.bibliography.get_paper_by_index(paper_index)
+            if not paper_key:
+                return [f"Paper {paper_index} not found. Use 'list papers' to see available papers."]
+            
+            success = self.reading_lists.add_paper(conversation_id, list_name, paper_key)
+            if success:
+                paper_title = self.bibliography.get_paper_title(paper_key)
+                return [f"✓ Added paper \"{paper_title}\" to reading list: {list_name}"]
+            else:
+                return [f"⚠ Failed to add paper to reading list '{list_name}'. The list may not exist."]
+        
+        # View a specific reading list
+        elif command_info["command"] == "view":
+            list_name = command_info["list_name"]
+            paper_info = self.bibliography.get_paper_info_dict()
+            formatted_list = self.reading_lists.format_list(conversation_id, list_name, paper_info)
+            
+            if formatted_list:
+                return self.split_message(formatted_list)
+            else:
+                return [f"⚠ Reading list '{list_name}' not found."]
+        
+        # View all reading lists
+        elif command_info["command"] == "view_all":
+            paper_info = self.bibliography.get_paper_info_dict()
+            formatted_lists = self.reading_lists.format_all_lists(conversation_id, paper_info)
+            
+            if formatted_lists:
+                return self.split_message(formatted_lists)
+            else:
+                return ["You don't have any reading lists yet. Create one with '!reading_list create <name>'."]
+        
+        # Remove paper from a reading list
+        elif command_info["command"] == "remove":
+            list_name = command_info["list_name"]
+            paper_index = command_info["paper_index"]
+            
+            paper_key, paper = self.bibliography.get_paper_by_index(paper_index)
+            if not paper_key:
+                return [f"Paper {paper_index} not found. Use 'list papers' to see available papers."]
+            
+            success = self.reading_lists.remove_paper(conversation_id, list_name, paper_key)
+            if success:
+                paper_title = self.bibliography.get_paper_title(paper_key)
+                return [f"✓ Removed paper \"{paper_title}\" from reading list: {list_name}"]
+            else:
+                return [f"⚠ Failed to remove paper from reading list '{list_name}'. The list or paper may not exist."]
+        
+        # Delete a reading list
+        elif command_info["command"] == "delete":
+            list_name = command_info["list_name"]
+            success = self.reading_lists.delete_list(conversation_id, list_name)
+            
+            if success:
+                return [f"✓ Deleted reading list: {list_name}"]
+            else:
+                return [f"⚠ Reading list '{list_name}' not found."]
+        
+        return ["Unknown reading list command. Please try again."]
+    
     def split_message(self, content):
         if len(content) <= 2000:
             return [content]
