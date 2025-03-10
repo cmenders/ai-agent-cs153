@@ -401,7 +401,7 @@ class MistralAgent:
             if not paper_key:
                 return [f"Paper {paper_index} not found. Use 'list papers' to see available papers."]
             
-            success = self.reading_lists.add_paper(conversation_id, list_name, paper_key)
+            success = self.reading_lists.add_paper_to_list(conversation_id, list_name, paper_key)
             if success:
                 paper_title = self.bibliography.get_paper_title(paper_key)
                 return [f"✓ Added paper \"{paper_title}\" to reading list: {list_name}"]
