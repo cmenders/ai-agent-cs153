@@ -4,22 +4,36 @@ import re
 from scholarly import scholarly
 
 async def search_google_scholar(query: str, maxResults: int = 3):
+    """
+    Search for academic papers, prioritizing the Semantic Scholar API.
+    If that fails, attempt to use Google Scholar via the scholarly library as a fallback.
+    """
     try:
-        # Set a strict timeout to prevent blocking
-        results = await asyncio.wait_for(
-            asyncio.to_thread(_sync_search_google_scholar, query, maxResults),
-            timeout=10.0  # 10-second timeout
-        )
+        # Try semantic search first (previously the fallback method)
+        results = await semantic_scholar_search(query, maxResults)
         
         # If we got results, return them
         if results:
             return results
             
-        # Otherwise, try the fallback method
-        return await fallback_search(query, maxResults)
+        # Otherwise, try scholarly as a fallback
+        print(f"Semantic Scholar search returned no results for '{query}', trying scholarly")
+        return await scholarly_search(query, maxResults)
+    except Exception as e:
+        print(f"Error in semantic search: {e}, trying scholarly as fallback")
+        return await scholarly_search(query, maxResults)
+
+async def scholarly_search(query: str, maxResults: int = 3):
+    """Attempt to search using Google Scholar via scholarly"""
+    try:
+        # Set a strict timeout to prevent blocking
+        return await asyncio.wait_for(
+            asyncio.to_thread(_sync_search_google_scholar, query, maxResults),
+            timeout=10.0  # 10-second timeout
+        )
     except (asyncio.TimeoutError, Exception) as e:
-        print(f"Error/timeout in scholarly search: {e}, trying fallback")
-        return await fallback_search(query, maxResults)
+        print(f"Error/timeout in scholarly search: {e}")
+        return []  # Return empty list instead of dummy data
 
 def _sync_search_google_scholar(query: str, maxResults: int = 3):
     """Synchronous version with reduced results"""
@@ -48,8 +62,8 @@ def _sync_search_google_scholar(query: str, maxResults: int = 3):
         print(f"Error in _sync_search: {e}")
         return []
 
-async def fallback_search(query: str, maxResults: int = 3):
-    """Simplified fallback search that won't block"""
+async def semantic_scholar_search(query: str, maxResults: int = 3):
+    """Primary search method using Semantic Scholar API"""
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -71,18 +85,9 @@ async def fallback_search(query: str, maxResults: int = 3):
                     
                     return results
     except Exception as e:
-        print(f"Fallback search error: {e}")
+        print(f"Semantic Scholar search error: {e}")
     
-    # Return dummy data as last resort to prevent bot from breaking
-    return [
-        {
-            "title": f"Search result for: {query} (Error retrieving papers)",
-            "authors": "Search service temporarily unavailable",
-            "year": "2023",
-            "citations": 0,
-            "url": "https://scholar.google.com/scholar?q=" + query.replace(" ", "+")
-        }
-    ]
+    return []  # Return empty list instead of dummy data
 
 async def format_search_results(searchQ: str, results: list) -> str:
     if not results:
