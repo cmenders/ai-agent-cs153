@@ -412,7 +412,7 @@ class MistralAgent:
         elif command_info["command"] == "view":
             list_name = command_info["list_name"]
             paper_info = self.bibliography.get_paper_info_dict()
-            formatted_list = self.reading_lists.format_list(conversation_id, list_name, paper_info)
+            formatted_list = self.reading_lists.format_lists(conversation_id, list_name, paper_info)
             
             if formatted_list:
                 return self.split_message(formatted_list)
