@@ -1,6 +1,16 @@
+import asyncio
 from scholarly import scholarly
 
 async def search_google_scholar(query: str, maxResults: int = 3):
+    try:
+        # Run the synchronous scholarly code in a separate thread
+        return await asyncio.to_thread(_sync_search_google_scholar, query, maxResults)
+    except Exception as e:
+        print(f"Error searching Google Scholar: {e}")
+        return []
+
+def _sync_search_google_scholar(query: str, maxResults: int = 3):
+    """Synchronous version that runs in a separate thread"""
     try:
         search_query = scholarly.search_pubs(query)
         results = []
