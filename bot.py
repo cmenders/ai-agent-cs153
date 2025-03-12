@@ -18,7 +18,7 @@ load_dotenv()
 # Create the bot with all intents
 # The message content and members intent must be enabled in the Discord Developer Portal for the bot to work.
 intents = discord.Intents.all()
-bot = commands.Bot(command_prefix=PREFIX, intents=intents)
+bot = commands.Bot(command_prefix=PREFIX, intents=intents, help_command=None)
 
 # Import the Mistral agent from the agent.py file
 agent = MistralAgent()
@@ -321,5 +321,210 @@ async def related(ctx, paper_index: int, max_results: int = 5):
     chunks = agent.split_message(result)
     for chunk in chunks:
         await ctx.send(chunk)
+
+@bot.command(name="help", help="Shows detailed help information about bot commands and features.")
+async def help_command(ctx, command: str = None):
+    """
+    Display detailed help information about the bot's commands and features.
+    
+    Usage: !help [command]
+    Examples: !help, !help cite, !help reading_list
+    """
+    embed = discord.Embed(title="Research Assistant Bot Help", color=discord.Color.blue())
+    
+    if command is None:
+        # General help overview
+        embed.description = "This bot serves as a research assistant that can search for academic papers, manage citations, and help with research-related tasks."
+        
+        embed.add_field(
+            name="📚 Standard Commands", 
+            value=(
+                "`!help` - Show this help message\n"
+                "`!ping` - Check if the bot is responding\n"
+                "`!papers` - List all papers that have been cited\n"
+                "`!cite <number> <style>` - Format a citation\n"
+                "`!bibliography <style>` - Show the bibliography\n"
+                "`!citation_styles` - List available citation styles"
+            ), 
+            inline=False
+        )
+        
+        embed.add_field(
+            name="📝 Research Notes", 
+            value=(
+                "`!add_note <number> <text>` - Add a note to a paper\n"
+                "`!view_notes [number]` - View notes for a paper/all papers\n"
+                "`!delete_note <paper> <note>` - Delete a specific note\n"
+                "`!clear_notes [number]` - Clear notes for a paper/all notes"
+            ), 
+            inline=False
+        )
+        
+        embed.add_field(
+            name="📋 Reading Lists", 
+            value=(
+                "`!reading_list create <name>` - Create a new reading list\n"
+                "`!reading_list add <name> <paper>` - Add paper to list\n"
+                "`!reading_list view [name]` - View a list or all lists\n"
+                "`!reading_list remove <name> <paper>` - Remove paper from list\n"
+                "`!reading_list delete <name>` - Delete a reading list"
+            ), 
+            inline=False
+        )
+        
+        embed.add_field(
+            name="🔍 Related Papers", 
+            value="`!related <paper> [max_results]` - Find related papers", 
+            inline=False
+        )
+        
+        embed.add_field(
+            name="💬 Natural Language Interactions", 
+            value=(
+                "You can also interact with the bot using natural language:\n"
+                "• Ask research questions to search for papers\n"
+                "• Request citations (e.g., 'cite paper 2 in MLA format')\n"
+                "• Manage reading lists (e.g., 'create reading list called ML_Papers')\n"
+                "• Find related papers (e.g., 'Get papers related to paper 2')\n"
+                "\nFor more details on a specific command, type `!help <command>`"
+            ), 
+            inline=False
+        )
+        
+    elif command.lower() == "cite":
+        embed.title = "Help: Citation Command"
+        embed.description = "Format a citation for a specific paper in the bibliography."
+        embed.add_field(name="Usage", value="`!cite <paper_index> <style>`", inline=False)
+        embed.add_field(name="Example", value="`!cite 1 apa`", inline=False)
+        embed.add_field(name="Available Styles", value="APA, MLA, Chicago, Harvard, IEEE", inline=False)
+        embed.add_field(
+            name="Natural Language", 
+            value="You can also use natural language: 'Can you cite paper 2 in MLA format?'", 
+            inline=False
+        )
+        
+    elif command.lower() == "bibliography":
+        embed.title = "Help: Bibliography Command"
+        embed.description = "Show the current bibliography in the specified format."
+        embed.add_field(name="Usage", value="`!bibliography <style>`", inline=False)
+        embed.add_field(name="Example", value="`!bibliography mla`", inline=False)
+        embed.add_field(
+            name="Natural Language", 
+            value="You can also use natural language: 'Show me the bibliography in Harvard style'", 
+            inline=False
+        )
+        
+    elif command.lower() == "papers":
+        embed.title = "Help: Papers Command"
+        embed.description = "List all papers that have been cited in the conversation."
+        embed.add_field(name="Usage", value="`!papers`", inline=False)
+        embed.add_field(
+            name="Natural Language", 
+            value="You can also use natural language: 'Show me the papers you've cited'", 
+            inline=False
+        )
+        
+    elif command.lower() == "citation_styles":
+        embed.title = "Help: Citation Styles Command"
+        embed.description = "List all available citation styles."
+        embed.add_field(name="Usage", value="`!citation_styles`", inline=False)
+        embed.add_field(
+            name="Natural Language", 
+            value="You can also use natural language: 'What citation styles do you support?'", 
+            inline=False
+        )
+        
+    elif command.lower() == "add_note":
+        embed.title = "Help: Add Note Command"
+        embed.description = "Add a note to a specific paper."
+        embed.add_field(name="Usage", value="`!add_note <paper_index> <note_text>`", inline=False)
+        embed.add_field(name="Example", value="`!add_note 1 This paper has an interesting methodology.`", inline=False)
+        embed.add_field(
+            name="Natural Language", 
+            value="You can also use natural language: 'Add note to paper 1: This paper has interesting methodology'", 
+            inline=False
+        )
+        
+    elif command.lower() == "view_notes":
+        embed.title = "Help: View Notes Command"
+        embed.description = "View notes for a specific paper or all papers."
+        embed.add_field(name="Usage", value="`!view_notes [paper_index]`", inline=False)
+        embed.add_field(name="Examples", value="`!view_notes 1` or `!view_notes`", inline=False)
+        embed.add_field(
+            name="Natural Language", 
+            value="You can also use natural language: 'Show notes for paper 1' or 'View all my research notes'", 
+            inline=False
+        )
+        
+    elif command.lower() == "delete_note":
+        embed.title = "Help: Delete Note Command"
+        embed.description = "Delete a specific note from a paper."
+        embed.add_field(name="Usage", value="`!delete_note <paper_index> <note_index>`", inline=False)
+        embed.add_field(name="Example", value="`!delete_note 1 2`", inline=False)
+        embed.add_field(
+            name="Natural Language", 
+            value="You can also use natural language: 'Delete note 2 from paper 1'", 
+            inline=False
+        )
+        
+    elif command.lower() == "clear_notes":
+        embed.title = "Help: Clear Notes Command"
+        embed.description = "Clear all notes for a specific paper or all papers."
+        embed.add_field(name="Usage", value="`!clear_notes [paper_index]`", inline=False)
+        embed.add_field(name="Examples", value="`!clear_notes 1` or `!clear_notes`", inline=False)
+        embed.add_field(
+            name="Natural Language", 
+            value="You can also use natural language: 'Clear notes for paper 3' or 'Delete all my research notes'", 
+            inline=False
+        )
+        
+    elif command.lower() == "reading_list":
+        embed.title = "Help: Reading List Command"
+        embed.description = "Manage reading lists - create lists, add/remove papers, and view lists."
+        embed.add_field(
+            name="Usage", 
+            value="`!reading_list <action> [name] [paper_index]`\nActions: create, add, view, remove, delete", 
+            inline=False
+        )
+        embed.add_field(
+            name="Examples", 
+            value=(
+                "`!reading_list create ML_Healthcare`\n"
+                "`!reading_list add ML_Healthcare 3`\n"
+                "`!reading_list view ML_Healthcare`\n"
+                "`!reading_list view` (shows all lists)\n"
+                "`!reading_list remove ML_Healthcare 2`\n"
+                "`!reading_list delete ML_Healthcare`"
+            ), 
+            inline=False
+        )
+        embed.add_field(
+            name="Natural Language", 
+            value=(
+                "You can also use natural language:\n"
+                "• 'Create a reading list called Quantum_Computing'\n"
+                "• 'Add paper 1 to reading list Quantum_Computing'\n"
+                "• 'Display papers in my Quantum_Computing reading list'\n"
+                "• 'Remove paper 1 from my Quantum_Computing reading list'\n"
+                "• 'Delete my Quantum_Computing reading list'"
+            ), 
+            inline=False
+        )
+        
+    elif command.lower() == "related":
+        embed.title = "Help: Related Papers Command"
+        embed.description = "Find papers related to a specific paper based on title, authors, and content."
+        embed.add_field(name="Usage", value="`!related <paper_index> [max_results]`", inline=False)
+        embed.add_field(name="Example", value="`!related 1 3`", inline=False)
+        embed.add_field(
+            name="Natural Language", 
+            value="You can also use natural language: 'Get papers related to paper 2'",
+            inline=False
+        )
+        
+    else:
+        embed.description = f"Command `{command}` not found. Use `!help` to see all available commands."
+    
+    await ctx.send(embed=embed)
 
 bot.run(token)
