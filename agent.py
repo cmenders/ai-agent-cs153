@@ -295,7 +295,7 @@ class MistralAgent:
             }
         
         # Check for add paper to reading list command
-        add_match = re.search(r'\b(?:add)\s+paper\s+(\d+)\s+(?:to|into)\s+(?:my\s+)?(?:reading\s+list\s+)?([\w_-]+)', message_content, re.IGNORECASE)
+        add_match = re.search(r'\b(?:add)\s+paper\s+(\d+)\s+(?:to|into)\s+(?:my\s+)?reading\s+list\s+([\w_-]+)', message_content, re.IGNORECASE)
         if add_match:
             return {
                 "command": "add",
@@ -304,7 +304,7 @@ class MistralAgent:
             }
         
         # Check for view reading list(s) command
-        view_match = re.search(r'\b(?:view|show|display|list)\s+(?:my\s+)?(?:reading\s+list\s+)?([\w_-]+)', message_content, re.IGNORECASE)
+        view_match = re.search(r'\b(?:view|show|display|list)\s+(?:my\s+)?reading\s+list\s+([\w_-]+)', message_content, re.IGNORECASE)
         if view_match:
             return {
                 "command": "view",
@@ -319,7 +319,7 @@ class MistralAgent:
             }
         
         # Check for remove paper from reading list command
-        remove_match = re.search(r'\b(?:remove|delete)\s+paper\s+(\d+)\s+from\s+(?:my\s+)?(?:reading\s+list\s+)?([\w_-]+)', message_content, re.IGNORECASE)
+        remove_match = re.search(r'\b(?:remove|delete)\s+paper\s+(\d+)\s+from\s+(?:my\s+)?reading\s+list\s+([\w_-]+)', message_content, re.IGNORECASE)
         if remove_match:
             return {
                 "command": "remove",
@@ -328,7 +328,7 @@ class MistralAgent:
             }
         
         # Check for delete reading list command
-        delete_match = re.search(r'\b(?:delete|remove)\s+(?:my\s+)?(?:reading\s+list\s+)?([\w_-]+)', message_content, re.IGNORECASE)
+        delete_match = re.search(r'\b(?:delete|remove)\s+(?:my\s+)?reading\s+list\s+([\w_-]+)', message_content, re.IGNORECASE)
         if delete_match:
             return {
                 "command": "delete",
@@ -422,7 +422,7 @@ class MistralAgent:
         # View all reading lists
         elif command_info["command"] == "view_all":
             paper_info = self.bibliography.get_paper_info_dict()
-            formatted_lists = self.reading_lists.format_all_lists(conversation_id, paper_info)
+            formatted_lists = self.reading_lists.format_lists(conversation_id)
             
             if formatted_lists:
                 return self.split_message(formatted_lists)

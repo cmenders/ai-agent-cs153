@@ -49,8 +49,6 @@ What are the recent advances in machine learning for healthcare?
 Request citations using natural language:
 ```
 Can you cite paper 2 in MLA format?
-Format the third paper in Chicago style
-Give me an IEEE citation for paper 1
 ```
 
 #### Bibliography Management
@@ -58,17 +56,13 @@ Give me an IEEE citation for paper 1
 Access the bibliography with natural language:
 ```
 Show me the bibliography in Harvard style
-List all the references
-Display the citations in APA format
 ```
 
 #### Paper Listing
 
 Get a list of papers:
 ```
-List all the papers you've found
 Show me the papers you've cited
-What papers do you have?
 ```
 
 #### Research Notes
@@ -98,11 +92,9 @@ Delete all my research notes
 Create and manage reading lists:
 ```
 Create a reading list called Quantum_Computing
-Add paper 2 to my Quantum_Computing list
-Show my reading lists
-Display papers in my Quantum_Computing list
-Remove paper 1 from my Quantum_Computing list
-Delete my Quantum_Computing list
+Display papers in my Quantum_Computing reading list
+Remove paper 1 from my Quantum_Computing reading list
+Delete my Quantum_Computing reading list
 ```
 
 #### Related Papers
@@ -110,9 +102,7 @@ Delete my Quantum_Computing list
 Find papers related to your current readings based on title, authors, and abstract similarity:
 ```
 Find papers related to paper 1
-Show me research similar to paper 3
 Get papers related to paper 2
-Display similar papers to paper 4
 ```
 
 #### Citation Styles
@@ -222,7 +212,7 @@ Bot:
 
 User:
 ```
-Add paper 1 to my Quantum_Computing list
+add paper 1 to reading list Quantum_Computing
 ```
 
 Bot:
